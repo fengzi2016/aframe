@@ -1,0 +1,107 @@
+<html>
+    <head>
+      <meta charset="utf-8">
+      <title>aframe-boilerplate</title>
+      <meta name="description" content="aframe-boilerplate">
+      <script src="https://aframe.io/releases/0.4.0/aframe.min.js"></script>
+    </head>
+    <script>
+        AFRAME.registerComponent('hello-world',{
+            init:function(){
+                console.log('Hello,World!');
+            }
+        });
+        // document.querySelector('a-scene').setAttribute('hello-world','');
+        AFRAME.registerComponent('log',{
+            schema:{
+                message:{type:'string',default:'hello,world!'},
+                event:{type:'string',default:''},
+            },
+            multiple:true,
+            init:function(){
+                // Closure to access fresh `this.data` from event handler context.
+                let self=this;
+                // .init() is a good place to set up initial state and variables.
+                // Store a reference to the handler so we can later remove it.
+                this.eventHandlerFn=function(){console.log(self.data.message);}
+            },
+            update:function(oldData){
+                let data=this.data;
+                let el=this.el;
+                // `event` updated. Remove the previous event listener if it exists.
+                if(oldData.event&&data.event!==oldData.event){
+                    el.removeEventListener(oldData.event,this.eventHandlerFn);
+                }
+                
+                if(data.event){
+                    el.addEventListener(data.event,this.eventHandlerFn);
+                    }else{
+                    console.log(data.message);
+                }
+            },
+            remove:function(){
+                let data=this.data;
+                let el=this.el;
+                if(data.event){
+                    el.removeEventListener(data.event,this.eventHandlerFn);
+                }
+            }
+        });
+        AFRAME.registerComponent('box',{
+            schema:{
+                width:{type:'number',default:1},
+                height:{type:"number",default:1},
+                depth:{type:'number',default:1},
+                color:{type:'color',default:'#AAA'}
+            },
+            init:function(){
+                let data=this.data;
+                let el=this.el;
+                this.geometry=new THREE.BoxBufferGeometry(data.width,data.height,data.depth);
+                this.material = new THREE.MeshStandardMaterial({color: data.color});
+                // Create mesh.
+                this.mesh = new THREE.Mesh(this.geometry, this.material);
+                // Set mesh on entity.
+                el.setObject3D('mesh', this.mesh);
+            },
+            update:function(oldData){
+                let data=this.data;
+                let el=this.el;
+                if(Object.keys(oldData).length===0){return;}
+                if(data.width!==oldData.width||data.height!==oldData.height||data.depth!==oldData.depth){
+                    el.getObject3D('mesh').geometry = new THREE.BoxBufferGeometry(data.width, data.height,data.depth);
+                }
+                if (data.color !== oldData.color) {
+                    el.getObject3D('mesh').material.color = data.color;
+                }
+            },
+            remove: function () {
+                 this.el.removeObject3D('mesh');
+            }
+                
+        });
+        
+      
+     </script>
+    <body>
+        <a-scence>
+            <!-- <a-entity hello-world> </a-entity> -->
+            <a-entity log="event:anEvent;message:Hello,Lijia"></a-entity>
+        </a-scence>
+        <a-scence>
+            <a-entity box="width: 0.5; height: 0.25; depth: 1; color: orange"
+            position="0 0 -5"></a-entity>
+        </a-scence>
+        
+    </body>
+    <script>
+        let el=document.querySelector('a-entity');
+        // console.log(el);
+        el.emit('anEvent');
+        el.setAttribute('log',{event:'anotherEvent',message:"Hello,new event!"});
+        el.emit('anotherEvent');
+        el.removeAttribute('log');
+        el.emit('anEvent');
+      
+    </script>
+</html>
